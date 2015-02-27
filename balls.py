@@ -43,7 +43,7 @@ class GameMode:
 class Ball:
     '''Simple ball class'''
 
-    def __init__(self, filename, pos = (0.0, 0.0), speed = (0.0, 0.0)):
+    def __init__(self, filename, pos=(0.0, 0.0), speed=(0.0, 0.0), accel=(0.0, 0.25)):
         '''Create a ball from image'''
         self.fname = filename
         self.surface = pygame.image.load(filename)
@@ -52,6 +52,7 @@ class Ball:
         self.pos = pos
         self.newpos = pos
         self.active = True
+        self.acceleration = accel
 
     def draw(self, surface):
         surface.blit(self.surface, self.rect)
@@ -60,6 +61,7 @@ class Ball:
         '''Proceed some action'''
         if self.active:
             self.pos = self.pos[0]+self.speed[0], self.pos[1]+self.speed[1]
+            self.speed = self.speed[0]+self.acceleration[0], self.speed[1]+self.acceleration[1]
 
     def logic(self, surface):
         x,y = self.pos
