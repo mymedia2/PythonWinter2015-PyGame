@@ -82,6 +82,26 @@ class Ball:
         self.speed = dx,dy
         self.rect.center = intn(*self.pos)
 
+class RotatedBall(Ball):
+    ''' Вращающиеся шары различных размеров '''
+
+    def __init__(self, *args, **kwargs):
+        self.angle = 0.0;
+        self.angular_speed = kwargs.pop('rotating', 0.0)
+        self.size = kwargs.pop('size', 1.0)
+        Ball.__init__(self, *args, **kwargs)
+
+    def action(self):
+        if self.active:
+            self.angle += self.angular_speed
+        Ball.action(self)
+
+    def draw(self, surface):
+        rotated_surface = pygame.transform.rotozoom(self.surface, self.angle, self.size)
+        rotated_rect = rotated_surface.get_rect()
+        rotated_rect.center = self.rect.center
+        surface.blit(rotated_surface, rotated_rect)
+
 class Universe:
     '''Game universe'''
 
@@ -151,10 +171,13 @@ Init(SIZE)
 Game = Universe(50)
 
 Run = GameWithDnD()
-for i in xrange(5):
+for i in 0, 0, 0, 1, 1:
     x, y = random.randrange(screenrect.w), random.randrange(screenrect.h)
     dx, dy = 1+random.random()*5, 1+random.random()*5
-    Run.objects.append(Ball("ball.gif",(x,y),(dx,dy)))
+    if i: Run.objects.append(Ball("ball.gif", (x,y), (dx,dy)))
+    else:
+        rt = random.random()
+        Run.objects.append(RotatedBall("ball.gif", (x,y), (dx,dy), rotating=rt))
 
 Game.Start()
 Run.Init()
