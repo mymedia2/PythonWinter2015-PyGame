@@ -53,6 +53,7 @@ class Ball:
         self.newpos = pos
         self.active = True
         self.acceleration = accel
+        self.mask = pygame.mask.from_surface(self.surface)
 
     def draw(self, surface):
         surface.blit(self.surface, self.rect)
@@ -63,9 +64,10 @@ class Ball:
             self.pos = self.pos[0]+self.speed[0], self.pos[1]+self.speed[1]
             self.speed = self.speed[0]+self.acceleration[0], self.speed[1]+self.acceleration[1]
 
-    def logic(self, surface):
+    def logic(self, surface, game_objects):
         x,y = self.pos
         dx, dy = self.speed
+
         if x < self.rect.width/2:
             x = self.rect.width/2
             dx = -dx
@@ -78,6 +80,12 @@ class Ball:
         elif y > surface.get_height() - self.rect.height/2:
             y = surface.get_height() - self.rect.height/2
             dy = -dy
+
+        for obj in game_objects:
+            offset = intn(obj.pos[0] - x, obj.pos[1] - y)
+            if not self.mask.overlap_area(obj.mask, offset):
+                dx, dy = -dx, -dy
+
         self.pos = x,y
         self.speed = dx,dy
         self.rect.center = intn(*self.pos)
@@ -116,7 +124,7 @@ class GameWithObjects(GameMode):
     def Logic(self, surface):
         GameMode.Logic(self, surface)
         for obj in self.objects:
-            obj.logic(surface)
+            obj.logic(surface, self.objects)
 
     def Draw(self, surface):
         GameMode.Draw(self, surface)
