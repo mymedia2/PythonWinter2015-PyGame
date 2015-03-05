@@ -3,6 +3,7 @@
 
 import pygame
 import random
+import itertools
 
 SIZE = 640, 480
 
@@ -64,7 +65,7 @@ class Ball:
             self.pos = self.pos[0]+self.speed[0], self.pos[1]+self.speed[1]
             self.speed = self.speed[0]+self.acceleration[0], self.speed[1]+self.acceleration[1]
 
-    def logic(self, surface, game_objects):
+    def logic(self, surface):
         x,y = self.pos
         dx, dy = self.speed
 
@@ -80,11 +81,6 @@ class Ball:
         elif y > surface.get_height() - self.rect.height/2:
             y = surface.get_height() - self.rect.height/2
             dy = -dy
-
-        for obj in game_objects:
-            offset = intn(obj.pos[0] - x, obj.pos[1] - y)
-            if not self.mask.overlap_area(obj.mask, offset):
-                dx, dy = -dx, -dy
 
         self.pos = x,y
         self.speed = dx,dy
@@ -124,7 +120,7 @@ class GameWithObjects(GameMode):
     def Logic(self, surface):
         GameMode.Logic(self, surface)
         for obj in self.objects:
-            obj.logic(surface, self.objects)
+            obj.logic(surface)
 
     def Draw(self, surface):
         GameMode.Draw(self, surface)
@@ -155,10 +151,26 @@ class GameWithDnD(GameWithObjects):
             self.drag = None
         GameWithObjects.Events(self, event)
 
+def iscolliding(ball1, ball2):
+    offset = intn(*map(lambda x: x[1] - x[0], zip(ball1.pos, ball2.pos)))
+    return bool(ball1.mask.overlap_area(ball2.mask, offset))
+
+class GameWithCollisions(GameWithDnD):
+
+    def Logic(self, surface):
+        GameWithDnD.Logic(self, surface)
+        for obj1, obj2 in itertools.combinations(self.objects, 2):
+            if iscolliding(obj1, obj2):
+                # TODO: Также необходимо сделать защиту от повторного столкновения
+                #obj1.pos = obj1.pos[0]-obj1.speed[0], obj1.pos[1]-obj1.speed[1]
+                #obj2.pos = obj2.pos[0]-obj2.speed[0], obj2.pos[1]-obj2.speed[1]
+                obj1.speed = -obj1.speed[0], -obj1.speed[1]
+                obj2.speed = -obj2.speed[0], -obj2.speed[1]
+
 Init(SIZE)
 Game = Universe(50)
 
-Run = GameWithDnD()
+Run = GameWithCollisions()
 for i in xrange(5):
     x, y = random.randrange(screenrect.w), random.randrange(screenrect.h)
     dx, dy = 1+random.random()*5, 1+random.random()*5
