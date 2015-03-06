@@ -4,6 +4,7 @@
 import pygame
 import random
 import itertools
+import math
 
 SIZE = 640, 480
 
@@ -155,23 +156,28 @@ def iscolliding(ball1, ball2):
     offset = intn(*map(lambda x: x[1] - x[0], zip(ball1.pos, ball2.pos)))
     return bool(ball1.mask.overlap_area(ball2.mask, offset))
 
+def normalize(vector):
+    lendth = math.sqrt(sum((vector[i] ** 2 for i in xrange(len(vector)))))
+    return tuple((vector[i] / lendth for i in xrange(len(vector))))
+
 class GameWithCollisions(GameWithDnD):
 
     def Logic(self, surface):
         GameWithDnD.Logic(self, surface)
         for obj1, obj2 in itertools.combinations(self.objects, 2):
             if iscolliding(obj1, obj2):
-                # TODO: Также необходимо сделать защиту от повторного столкновения
-                #obj1.pos = obj1.pos[0]-obj1.speed[0], obj1.pos[1]-obj1.speed[1]
-                #obj2.pos = obj2.pos[0]-obj2.speed[0], obj2.pos[1]-obj2.speed[1]
-                obj1.speed = -obj1.speed[0], -obj1.speed[1]
-                obj2.speed = -obj2.speed[0], -obj2.speed[1]
+                # FIXME: необходима защита от выхода шарика за пределы экрана
+                obj1.speed, obj2.speed = obj2.speed, obj1.speed
+                dir1, dir2 = normalize(obj1.speed), normalize(obj2.speed)  # направления
+                while iscolliding(obj1, obj2):
+                    obj1.pos = obj1.pos[0]+dir1[0], obj1.pos[1]+dir1[1]
+                    obj2.pos = obj2.pos[0]+dir2[0], obj2.pos[1]+dir2[1]
 
 Init(SIZE)
 Game = Universe(50)
 
 Run = GameWithCollisions()
-for i in xrange(5):
+for i in xrange(3):
     x, y = random.randrange(screenrect.w), random.randrange(screenrect.h)
     dx, dy = 1+random.random()*5, 1+random.random()*5
     Run.objects.append(Ball("ball.gif",(x,y),(dx,dy)))
